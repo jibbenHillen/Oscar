@@ -27,9 +27,26 @@ let translate (messages, actors, functions) =
     | _           -> raise (Failure ("TODO implement types") )
   in
 
-  (* Declare print(), which the print built-in function will call *)
-  let print_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
-  let print_func = L.declare_function "printf" print_t the_module in
+
+  let func_lookup (fname) =
+    match (L.lookup_function (match fname with
+                                "printf" ->  the_module
+                              | _ -> _ ) with
+        None -> raise (Failure ("Func " ^ fname ^ " not defined in codegen."))
+      | Some(func) -> func
+  in
+
+    let print_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
+    let _ = L.declare_function "prinf" print_t the_module in
+
+(*
+  let create_imported_funcs () =
+    (* Functions from C funcs *) 
+    (* Declare print(), which the print built-in function will call *)
+
+  in
+*)
+
 
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
@@ -47,23 +64,6 @@ let translate (messages, actors, functions) =
 
     (* clear hashtable *)
     ignore(Hashtbl.clear local_vars);
-
-    (* params to types *)
-    (*
-    let rec map_param_to_type = function
-        S.SInt_Lit(_)      -> A.Int_t
-      | S.SBool_Lit(_)     -> A.Bool_t
-      | S.SDouble_Lit(_)   -> A.Double_t
-      | S.SChar_Lit(_)     -> A.Char_t
-      | S.SString_Lit(_)   -> A.String_t
-      | S.SBinop(e1, _, _) -> map_param_to_type e1
-                                (* temp fix, grabs type of left arg *)
-      | S.SUop(_, e)       -> map_param_to_type e
-      | S.SFuncCall(_, _)      -> A.Int_t
-      (* todo: this assumes type is int; should grab type from semantic analysis *)
-      | S.SId(_)           -> A.Int_t
-    in
-    *)
 
     let (the_function, _) = StringMap.find func.S.sf_name function_decls in
     let builder = L.builder_at_end context (L.entry_block the_function) in
@@ -206,6 +206,8 @@ let translate (messages, actors, functions) =
     (* t_el is list of t_exprs *)
     and build_print_call t_el builder =
 
+      let print_func = func_lookup "Println" in
+
       (* make a function that handles anything with bool_t as an if *)
       let to_print_texpr texpr = match (snd texpr) with
           A.Bool_t  ->
@@ -310,5 +312,6 @@ let translate (messages, actors, functions) =
       | _ -> ()
   in
 
+(*   create_imported_funcs(); *)
   List.iter build_function_body functions;
   the_module
