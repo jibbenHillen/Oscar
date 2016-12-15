@@ -1,0 +1,10 @@
+def scopeTest() => int = {
+	int a = 6;
+	Println(a);
+	return 5;
+}
+
+def main() => unit = {
+  int a = scopeTest();
+  Println(a);
+}
