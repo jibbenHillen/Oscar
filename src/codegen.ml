@@ -2,6 +2,10 @@ module L = Llvm
 module A = Ast
 module S = Sast
 
+open Conf
+open Llvm_linker
+open Llvm_bitreader
+
 module StringMap = Map.Make(String)
 open Hashtbl
 (* module Hashtbl = Hashtbl.Make(String) *)
@@ -11,6 +15,7 @@ let local_vars = Hashtbl.create 50
 let translate (messages, actors, functions) =
   let context = L.global_context () in
   let the_module = L.create_module context "Oscar"
+  and i64_t  = L.i64_type context
   and i32_t  = L.i32_type context
   and i8_t   = L.i8_type context
   and i1_t   = L.i1_type context
@@ -30,22 +35,37 @@ let translate (messages, actors, functions) =
 
   let func_lookup (fname) =
     match (L.lookup_function (match fname with
-                                "printf" ->  the_module
-                              | _ -> _ ) with
+                                "Println" ->  "printf"
+                              | _ -> fname ) the_module) with
         None -> raise (Failure ("Func " ^ fname ^ " not defined in codegen."))
       | Some(func) -> func
   in
 
-    let print_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
-    let _ = L.declare_function "prinf" print_t the_module in
 
-(*
   let create_imported_funcs () =
-    (* Functions from C funcs *) 
-    (* Declare print(), which the print built-in function will call *)
-
+    (* Functions from C *) 
+    let print_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
+    let _ = L.declare_function "printf" print_t the_module in
+(* 
+    (* Functions from Native *)
+    let foreach_t = L.function_type void_t [| (L.pointer_type i64_t); (L.pointer_type i64_t); |] in
+    let _ = L.declare_function "ForEach" foreach_t the_module in
+    (* second ForEach for Map *)
+    let filter_t = L.function_type (L.pointer_type i64_t) [| (L.pointer_type i64_t); (L.pointer_type i64_t); |] in
+    let _ = L.declare_function "Filter" filter_t the_module in
+    (* second Filter for Map *)
+    let reverse_t = L.function_type (L.pointer_type i64_t) [| (L.pointer_type i64_t) |] in
+    let _ = L.declare_function "Reverse" reverse_t the_module in *)
+    ();
   in
-*)
+
+  let link_file file_name = 
+    let llctx = Llvm.global_context () in
+    let llmem = Llvm.MemoryBuffer.of_file "bindings.bc" in
+    let llm = Llvm_bitreader.parse_bitcode llctx llmem in
+    ignore(Llvm_linker.link_modules the_module llm);
+  in
+
 
 
   (* Define each function (arguments and return type) so we can call it *)
@@ -207,7 +227,7 @@ let translate (messages, actors, functions) =
     (* t_el is list of t_exprs *)
     and build_print_call t_el builder =
 
-      let print_func = func_lookup "Println" in
+      let print_func = func_lookup "printf" in
 
       (* make a function that handles anything with bool_t as an if *)
       let to_print_texpr texpr = match (snd texpr) with
@@ -314,6 +334,7 @@ let translate (messages, actors, functions) =
       | _ -> ()
   in
 
-(*   create_imported_funcs(); *)
-  List.iter build_function_body functions;
+  let _ = create_imported_funcs() in
+  let _ = link_file Conf.bindings_path in
+  let _ = List.iter build_function_body functions in
   the_module

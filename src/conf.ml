@@ -1,0 +1,1 @@
+let bindings_path = "src/native/immut/immut.bc"
