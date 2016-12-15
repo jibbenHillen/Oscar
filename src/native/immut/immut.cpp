@@ -312,7 +312,6 @@ bool SubSet(immut::set<T> const & a, immut::set<T> const & b)
     return is_subset;
 }
 
-/*
 void test_list(void)
 {
     immut::list<int> lst = { 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -419,6 +418,13 @@ void test_map(void)
     cout << map << endl;
 }
 
+immut::list<int> makeIntList()
+{
+
+    immut::list<int> lst = { 1, 2, 3, 4, 5, 6, 7, 8, 9};   
+    return lst;
+}
+/*
 int main(void)
 {
     test_list();

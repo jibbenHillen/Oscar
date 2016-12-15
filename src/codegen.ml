@@ -46,9 +46,11 @@ let translate (messages, actors, functions) =
     (* Functions from C *) 
     let print_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
     let _ = L.declare_function "printf" print_t the_module in
-(* 
+
     (* Functions from Native *)
-    let foreach_t = L.function_type void_t [| (L.pointer_type i64_t); (L.pointer_type i64_t); |] in
+    let makeIntList_t = L.function_type (L.pointer_type i64_t) [| |] in
+    let _ = L.declare_function "MakeIntList" makeIntList_t the_module in
+   (*  let foreach_t = L.function_type void_t [| (L.pointer_type i64_t); (L.pointer_type i64_t); |] in
     let _ = L.declare_function "ForEach" foreach_t the_module in
     (* second ForEach for Map *)
     let filter_t = L.function_type (L.pointer_type i64_t) [| (L.pointer_type i64_t); (L.pointer_type i64_t); |] in
@@ -61,12 +63,19 @@ let translate (messages, actors, functions) =
 
   let link_file file_name = 
     let llctx = Llvm.global_context () in
-    let llmem = Llvm.MemoryBuffer.of_file "bindings.bc" in
+    let llmem = Llvm.MemoryBuffer.of_file "src/native/immut/immut.bc" in
     let llm = Llvm_bitreader.parse_bitcode llctx llmem in
     ignore(Llvm_linker.link_modules the_module llm);
   in
 
 
+(*   let generate_map_of_type type llexpr =
+
+    let sizeofexpr = ll.sizeof type in
+    (* Build up expressions here *)
+    
+
+ *)
 
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =

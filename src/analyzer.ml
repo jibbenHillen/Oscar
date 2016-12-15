@@ -205,7 +205,7 @@ let check_actor_lit (sa : sactor) (args : t_expr list) =
 
 let check_builtin (f : string) (tel : t_expr list) (env : scope) =
   let args_len = List.length tel in
-    match f with
+      match f with
         "Println" ->
           (match tel with
               [(_, tail_t)] ->
@@ -343,6 +343,7 @@ let check_builtin (f : string) (tel : t_expr list) (env : scope) =
                         types_equal acc rt -> (SFuncCall(f, tel), rt)
                   | _ -> raise (Builtin_arg_type_err (f, tel)))
             | _ -> raise (Builtin_arg_num_err (f, 2, args_len)))
+      | "MakeIntList" -> (SFuncCall(f, tel), Unit_t)
       | "Reduce" ->
           (match tel with
               (_, head_t) :: [(_, tail_t)] ->
@@ -352,7 +353,7 @@ let check_builtin (f : string) (tel : t_expr list) (env : scope) =
                         (SFuncCall(f, tel), rt)
                   | _ -> raise (Builtin_arg_type_err (f, tel)))
             | _ -> raise (Builtin_arg_num_err (f, 2, args_len)))
-      | _ -> raise Not_found
+      | _ -> raise (Failure (f))
 
 
 let check_binop (te1 : t_expr) (te2 : t_expr)
