@@ -11,12 +11,13 @@ let local_vars = Hashtbl.create 50
 
 let context = L.global_context ()
 let the_module = L.create_module context "Oscar"
-and i64_t  = L.i64_type context
-and i32_t  = L.i32_type context
-and i8_t   = L.i8_type context
-and i1_t   = L.i1_type context
-and f_t    = L.double_type context
-and void_t = L.void_type context
+let i64_t  = L.i64_type context;;
+let i32_t  = L.i32_type context;;
+let i8_t   = L.i8_type context;;
+let i1_t   = L.i1_type context;;
+let f_t    = L.double_type context;;
+let void_t = L.void_type context;;
+let ptr_t = L.pointer_type i8_t;;
 
 let rec ltype_of_typ (typ : A.types) = match typ with
     A.Int_t     -> i32_t
@@ -24,8 +25,9 @@ let rec ltype_of_typ (typ : A.types) = match typ with
   | A.Bool_t    -> i1_t
   | A.Unit_t    -> void_t
   | A.Double_t  -> f_t
-  | A.String_t  -> L.pointer_type i8_t
+  | A.String_t  -> ptr_t
   | A.Func_t (typs, rt) -> L.pointer_type (ltype_of_func typs rt)
+  | A.List_t(typ) -> ptr_t
   | _           -> raise (Failure ("TODO implement types") )
 
 and ltype_of_func typs rt =
@@ -37,7 +39,7 @@ and ltype_of_func typs rt =
 
 (* Declare print(), which the print built-in function will call *)
 let print_func =
-  let print_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
+  let print_t = L.var_arg_function_type i32_t [| ptr_t |] in
   L.declare_function "printf" print_t the_module
 
 let main =
@@ -73,11 +75,11 @@ let lookup n =
 
 
 let add_local builder (n, t) p =
-(*   print_endline ("added local: " ^ n); *)
+  print_endline ("added local: " ^ n);
   let local = L.build_alloca (ltype_of_typ t) n builder in
-    let () = ignore(L.build_store p local builder) in
-    let () = ignore(Hashtbl.add local_vars n local) in
-    ignore(L.set_value_name n p)
+  let () = ignore(L.build_store p local builder) in
+  (* let () = ignore(Hashtbl.add local_vars n local) in *)
+  ignore(L.set_value_name n p)
 
 
 let ll_binop op typ =
@@ -164,7 +166,7 @@ let rec build_expr builder (te : S.t_expr) =
       let func = define_func "tmp" typ in
       let tmp_builder = L.builder_at_end context (L.insertion_block builder) in
       build_func tmp_builder func f
-  | (S.SList_Lit(t, exprs), typ)  -> raise (Failure ("TODO: lists") )
+  | (S.SList_Lit(t, t_el), typ)  -> build_list builder t_el typ
   | (S.SSet_Lit(t, exprs), typ)  -> raise (Failure ("TODO: sets") )
   | (S.SMap_Lit(kt, vt, kvs), typ)-> raise (Failure ("TODO: maps") )
   | (S.SActor_Lit(n, exprs), typ) -> raise (Failure ("TODO: actors") )
@@ -203,6 +205,20 @@ and define_func name typ =
 
   let ftype = ltype_of_func typs rt in
   L.define_function name ftype the_module
+
+
+and build_list builder t_el typ = 
+  print_endline "hello";
+  let make_func = func_lookup "_Z11makeListIntiz" in
+  let actuals = List.rev (List.map (build_expr builder) (List.rev t_el)) in
+  let num_args = L.const_int i32_t (List.length actuals) in
+(*   let result = (
+    match typ with
+        A.Unit_t -> ""
+      | _ -> "MakeList" ^ "_result"
+    ) in *)
+  L.build_call make_func (Array.of_list (num_args :: actuals)) "MakeList" builder
+
 
 and build_func builder func f =
 (*   let () = ignore(Hashtbl.clear local_vars) in *)
@@ -325,34 +341,48 @@ and build_stmt builder func stmt =
 
 (* for now we just add them all to local_vars hashtable *)
 let create_imported_funcs builder =
-  (* Functions from C *) 
-  let print_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
-  let _ = L.declare_function "printf" print_t the_module in
+(*   (* Functions from C *) 
+  let print_t = L.var_arg_function_type i32_t [| ptr_t |] in
+  let _ = L.declare_function "printf" print_t the_module in *)
 
   (* Functions from Native *)
 
-  let makeListInt_t = L.function_type (L.pointer_type i8_t) [| |] in
-  let makeListInt_fp = L.declare_function "_Z11makeListIntv" makeListInt_t the_module in
+  print_endline "here?";
 
-  add_local builder ("MakeList", A.Func_t([], A.String_t)) makeListInt_fp;
+  let makeListInt_t = L.var_arg_function_type i8_t [| i32_t |] in
+  let _ = L.declare_function "_Z11makeListIntiz" makeListInt_t the_module in
 
-  let isEmptyInt_t = L.function_type i1_t [| (L.pointer_type i8_t) |] in
+  print_endline "or here";
+
+(*   add_local builder ("MakeList", A.Func_t([A.Int_t], A.Int_t)) makeListInt_fp; *)
+
+  print_endline "but not here";
+
+  (* variadic version *)
+ (*  let makeListInt_t = L.var_arg_function_type ptr_t [| i32_t |] in
+  let makeListInt_fp = L.declare_function "_Z11makeListIntiz" makeListInt_t the_module in
+
+  add_local builder ("MakeList", A.Func_t([A.Int_t; A.String_t], A.String_t)) makeListInt_fp; *)
+
+
+
+  let isEmptyInt_t = L.function_type i1_t [| ptr_t |] in
   let isEmptyInt_fp = L.declare_function "_Z10isEmptyIntN5immut4listIiEE" isEmptyInt_t the_module in
 
   add_local builder ("IsEmpty", A.Func_t([A.String_t], A.Bool_t)) isEmptyInt_fp;
 
 
-  let frontInt_t = L.function_type i32_t [| (L.pointer_type i8_t) |] in
+  let frontInt_t = L.function_type i32_t [| ptr_t |] in
   let frontInt_fp = L.declare_function "_Z8frontIntN5immut4listIiEE" frontInt_t the_module in
 
   add_local builder ("Front", A.Func_t([A.String_t], A.Int_t)) frontInt_fp;
 
-  let containsInt_t = L.function_type i1_t [| (L.pointer_type i8_t); i32_t |] in
+  let containsInt_t = L.function_type i1_t [| ptr_t; i32_t |] in
   let containsInt_fp = L.declare_function "_Z11containsIntN5immut4listIiEEi" containsInt_t the_module in
 
   add_local builder ("Contains", A.Func_t([A.String_t; A.Int_t], A.Bool_t)) containsInt_fp;
 
-  let popFrontInt_t = L.function_type (L.pointer_type i8_t) [| (L.pointer_type i8_t) |] in
+  let popFrontInt_t = L.function_type (ptr_t) [| ptr_t |] in
   let popFrontInt_fp = L.declare_function "_Z11PopFrontIntN5immut4listIiEE" popFrontInt_t the_module in
 
   add_local builder ("PopFront", A.Func_t([A.String_t], A.String_t)) popFrontInt_fp;

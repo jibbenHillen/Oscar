@@ -418,15 +418,43 @@
 //     cout << map << endl;
 // }
 
-immut::list<int> *makeListInt()
+// immut::list<int> *makeListInt(int *lst, int num)
+// {
+
+//     printf("%s", "WHY\n");
+//     auto ret = new immut::list<int>();
+
+//     for (int i = 0; i < num; i++)
+//     {
+//         ret->push_front(lst[i]);
+//     }
+
+//     return ret;
+// }
+
+
+immut::list<int> *makeListInt(int n_args, ...)
 {
 
     printf("%s", "WHY\n");
-    immut::list<int> lst = { 42, 43, 2, 3, 4, 5, 6, 7, 8, 9};   
+    va_list ap;
+    va_start(ap, n_args);
+    auto ret = new immut::list<int>();
 
-    auto ret = new immut::list<int>(lst);
+    for(int i = 2; i <= n_args; i++) {
+        int a = va_arg(ap, int);
+        ret->push_front(a);
+    }
+    va_end(ap);
+
+    
     return ret;
 }
+
+// int makeListInt(int n_args, ...)
+// {
+//     return 3;
+// }
 
 bool isEmptyInt(immut::list<int> l)
 {
