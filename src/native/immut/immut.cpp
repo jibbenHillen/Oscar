@@ -1,56 +1,56 @@
 #include "list.h"
-#include "map.h"
-#include "set.h"
+// #include "map.h"
+// #include "set.h"
 
 #include <vector>
 #include <string>
 
-template <typename T, typename F>
-void ForEach(const F f, const immut::list<T> &t)
-{
-    t.forEach(f);
-}
+// template <typename T, typename F>
+// void ForEach(const F f, const immut::list<T> &t)
+// {
+//     t.forEach(f);
+// }
 
-template <typename T, typename F>
-void ForEach(const F f, const immut::set<T> &t)
-{
-    t.forEach(f);
-}
+// template <typename T, typename F>
+// void ForEach(const F f, const immut::set<T> &t)
+// {
+//     t.forEach(f);
+// }
 
-template <typename K, typename V, typename F>
-void ForEach(const F f, const immut::map<K, V> &t)
-{
-    t.forEach(f);
-}
+// template <typename K, typename V, typename F>
+// void ForEach(const F f, const immut::map<K, V> &t)
+// {
+//     t.forEach(f);
+// }
 
-template<class T, class U, class F>
-U FoldLeft(F f, U acc, immut::list<T> lst)
-{
-    static_assert(is_convertible<F, function<U(U, T)>>::value,
-        "FoldLeft requires a function type U(U, T)");
+// template<class T, class U, class F>
+// U FoldLeft(F f, U acc, immut::list<T> lst)
+// {
+//     static_assert(is_convertible<F, function<U(U, T)>>::value,
+//         "FoldLeft requires a function type U(U, T)");
 
-    ForEach([&f, &acc](const T &v){
-        acc = f(acc, v);
-    }, lst);
+//     ForEach([&f, &acc](const T &v){
+//         acc = f(acc, v);
+//     }, lst);
 
-    return acc;
-}
+//     return acc;
+// }
 
-template<class T>
-immut::list<T> Reverse(immut::list<T> const &lst)
-{
-    return FoldLeft([](immut::list<T> const &acc, T v) {
-        return immut::list<T>(v, acc);
-    }, immut::list<T>(), lst);
-}
+// template<class T>
+// immut::list<T> Reverse(immut::list<T> const &lst)
+// {
+//     return FoldLeft([](immut::list<T> const &acc, T v) {
+//         return immut::list<T>(v, acc);
+//     }, immut::list<T>(), lst);
+// }
 
-template <typename T>
-size_t Size(immut::list<T> l)
-{
-    return FoldLeft([](size_t acc, T t) -> size_t {
-        return acc + 1;
-    }, 0, l);
-}
+// template <typename T>
+// size_t Size(immut::list<T> l)
+// {
+//     return FoldLeft([](size_t acc, T t) -> size_t {
+//         return acc + 1;
+//     }, 0, l);
+// }
 
 // template <typename T>
 // size_t Size(immut::set<T> s)
@@ -418,38 +418,59 @@ size_t Size(immut::list<T> l)
 //     cout << map << endl;
 // }
 
-// immut::list<int> *makeIntList()
-// {
-
-//     immut::list<int> lst = { 1, 2, 3, 4, 5, 6, 7, 8, 9};   
-
-//     auto ret = new immut::list<int>(lst);
-//     return ret;
-// }
-
-immut::list<int> *makeIntList(int init)
+immut::list<int> *makeListInt()
 {
 
-    immut::list<int> lst = { init };
+    printf("%s", "WHY\n");
+    immut::list<int> lst = { 42, 43, 2, 3, 4, 5, 6, 7, 8, 9};   
 
     auto ret = new immut::list<int>(lst);
-    cout << lst << endl;
-
     return ret;
 }
 
-// int makeIntList()
-// {
-//     printf("%s", "David Watkins\n");
-//     return 5;
-// }
-/*
-int main(void)
+bool isEmptyInt(immut::list<int> l)
 {
-    test_list();
-    test_set();
-    test_map();
-
-    return 0;
+    return l.isEmpty();
 }
-*/
+
+immut::list<char> *makeListChar()
+{
+    immut::list<char> lst = {'a', 'b', 'c', 'd', 'e', 'f', 'g'};
+    auto ret = new immut::list<char>(lst);
+    return ret;
+}
+
+int frontInt(immut::list<int> l)
+{
+    return l.front();
+}
+
+bool containsInt(immut::list<int> l, int i)
+{
+    return l.contains(i);
+}
+
+immut::list<int> *PopFrontInt(immut::list<int> l)
+{
+    auto ret = new immut::list<int>(l.pop_front());
+    return ret;
+}
+
+
+
+
+bool testFunc(int i)
+{
+    printf("%s", "cmon\n");
+    printf("%d", i);
+    return true;
+}
+
+// int main(void)
+// {
+//     test_list();
+//     test_set();
+//     test_map();
+
+//     return 0;
+// }

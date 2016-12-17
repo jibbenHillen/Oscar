@@ -62,9 +62,10 @@ let func_lookup fname =
     | Some(f)  -> f
 
 let lookup n =
+(*   print_endline ("looking for " ^ n); *)
   try Hashtbl.find local_vars n with
-      | Not_found -> (* print_endline ("undefined local variable: " ^ n);
-                     print_endline ("checking in funcs"); *)
+      | Not_found -> print_endline ("undefined local variable: " ^ n);
+                     print_endline ("checking in funcs");
                      func_lookup n
 
 
@@ -329,16 +330,38 @@ let create_imported_funcs builder =
   let _ = L.declare_function "printf" print_t the_module in
 
   (* Functions from Native *)
-  (* let makeIntList_t = L.function_type (L.pointer_type i64_t) [| |] in
-  let makeIntList_fp = L.declare_function "MakeIntList" makeIntList_t the_module in
 
-  let tmp_builder = L.builder_at_end context (L.insertion_block builder) in
-  add_local tmp_builder ("MakeIntList", A.Func_t([], A.Unit_t)) makeIntList_fp; *)
+  let makeListInt_t = L.function_type (L.pointer_type i8_t) [| |] in
+  let makeListInt_fp = L.declare_function "_Z11makeListIntv" makeListInt_t the_module in
 
-  let makeIntList_t = L.function_type (L.pointer_type i8_t) [| i32_t |] in
-  let makeIntList_fp = L.declare_function "_Z11makeIntListi" makeIntList_t the_module in
+  add_local builder ("MakeList", A.Func_t([], A.String_t)) makeListInt_fp;
 
-  add_local builder ("MakeIntList", A.Func_t([A.Int_t], A.String_t)) makeIntList_fp;
+  let isEmptyInt_t = L.function_type i1_t [| (L.pointer_type i8_t) |] in
+  let isEmptyInt_fp = L.declare_function "_Z10isEmptyIntN5immut4listIiEE" isEmptyInt_t the_module in
+
+  add_local builder ("IsEmpty", A.Func_t([A.String_t], A.Bool_t)) isEmptyInt_fp;
+
+
+  let frontInt_t = L.function_type i32_t [| (L.pointer_type i8_t) |] in
+  let frontInt_fp = L.declare_function "_Z8frontIntN5immut4listIiEE" frontInt_t the_module in
+
+  add_local builder ("Front", A.Func_t([A.String_t], A.Int_t)) frontInt_fp;
+
+  let containsInt_t = L.function_type i1_t [| (L.pointer_type i8_t); i32_t |] in
+  let containsInt_fp = L.declare_function "_Z11containsIntN5immut4listIiEEi" containsInt_t the_module in
+
+  add_local builder ("Contains", A.Func_t([A.String_t; A.Int_t], A.Bool_t)) containsInt_fp;
+
+  let popFrontInt_t = L.function_type (L.pointer_type i8_t) [| (L.pointer_type i8_t) |] in
+  let popFrontInt_fp = L.declare_function "_Z11PopFrontIntN5immut4listIiEE" popFrontInt_t the_module in
+
+  add_local builder ("PopFront", A.Func_t([A.String_t], A.String_t)) popFrontInt_fp;
+
+
+(*   let testFunc_t = L.function_type i1_t [| i32_t |] in
+  let testFunc_fp = L.declare_function "_Z8testFunci" testFunc_t the_module in
+
+  add_local builder ("TestFunc", A.Func_t([A.Int_t], A.Bool_t)) testFunc_fp; *)
 
  (*  let foreach_t = L.function_type void_t [| (L.pointer_type i64_t); (L.pointer_type i64_t); |] in
   let _ = L.declare_function "ForEach" foreach_t the_module in

@@ -229,22 +229,22 @@ let check_builtin (f : string) (tel : t_expr list) (env : scope) =
                       (SFuncCall(f, tel), Int_t)
                   | _ -> raise (Builtin_arg_type_err (f, tel)))
             | _ -> raise (Builtin_arg_num_err (f, 1, args_len)))
-      | "Contains" ->
+(*       | "Contains" ->
           (match tel with
               (_, head_t) :: [(_, tail_t)] ->
                 (match tail_t with
                     List_t ct | Set_t ct | Map_t (ct, _) when
                       types_equal head_t ct -> (SFuncCall(f, tel), Bool_t)
                   | _ -> raise (Builtin_arg_type_err (f, tel)))
-            | _ -> raise (Builtin_arg_num_err (f, 2, args_len)))
-      | "Prepend" | "Append" | " PopFront" | "PopBack"->
+            | _ -> raise (Builtin_arg_num_err (f, 2, args_len))) *)
+(*       | "Prepend" | "Append" | " PopFront" | "PopBack"->
           (match tel with
               (_, head_t) :: [(_, tail_t)] ->
                 (match tail_t with
                     List_t ct when
                       types_equal head_t ct -> (SFuncCall(f, tel), tail_t)
                   | _ -> raise (Builtin_arg_type_err (f, tel)))
-            | _ -> raise (Builtin_arg_num_err (f, 2, args_len)))
+            | _ -> raise (Builtin_arg_num_err (f, 2, args_len))) *)
       | "MergeFront" | "MergeBack"->
           (match tel with
               (_, head_t) :: [(_, tail_t)] ->
@@ -333,7 +333,11 @@ let check_builtin (f : string) (tel : t_expr list) (env : scope) =
                         (SFuncCall(f, tel), rt)
                   | _ -> raise (Builtin_arg_type_err (f, tel)))
             | _ -> raise (Builtin_arg_num_err (f, 2, args_len)))
-      | "MakeIntList" -> (SFuncCall(f, tel), String_t)
+      | "MakeList" -> (SFuncCall(f, tel), String_t)
+      | "IsEmpty" -> (SFuncCall(f, tel), Bool_t)
+      | "Front" -> (SFuncCall(f, tel), Int_t)
+      | "Contains" -> (SFuncCall(f, tel), Bool_t)
+      | "PopFront" -> (SFuncCall(f, tel), String_t)
       | _ -> raise Not_found
 
 
